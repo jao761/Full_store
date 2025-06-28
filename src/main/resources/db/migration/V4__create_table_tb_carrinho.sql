@@ -1,0 +1,4 @@
+CREATE TABLE tb_carrinho (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    valor_compra DOUBLE NOT NULL DEFAULT 0.0
+);
