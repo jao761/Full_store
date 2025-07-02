@@ -6,30 +6,31 @@ import com.joao.api_vendas_roupas.domain.carrinho.carrinhoProduto.CarrinhoProdut
 import com.joao.api_vendas_roupas.domain.carrinho.carrinhoProduto.DadosAdicionarProduto;
 import com.joao.api_vendas_roupas.domain.produto.Produto;
 import com.joao.api_vendas_roupas.domain.produto.ProdutoRepository;
+import com.joao.api_vendas_roupas.domain.usuario.Usuario;
 import com.joao.api_vendas_roupas.infra.exception.RegraDeNegocioException;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CarrinhoService {
 
-    public final CarrinhoProdutoRepository carrinhoProdutoRepository;
-    public final ProdutoRepository produtoRepository;
-    public final CarrinhoRepository carrinhoRepository;
+    private final CarrinhoProdutoRepository carrinhoProdutoRepository;
+    private final ProdutoRepository produtoRepository;
+    private final CarrinhoRepository carrinhoRepository;
 
     public CarrinhoService(CarrinhoProdutoRepository carrinhoProdutoRepository, ProdutoRepository produtoRepository, CarrinhoRepository carrinhoRepository) {
         this.carrinhoProdutoRepository = carrinhoProdutoRepository;
         this.produtoRepository = produtoRepository;
         this.carrinhoRepository = carrinhoRepository;
+
     }
 
     @Transactional
-    public CarrinhoProduto adicionarProduto(DadosAdicionarProduto dados) {
+    public CarrinhoProduto adicionarProduto(DadosAdicionarProduto dados, Usuario logado) {
         Produto produto = produtoRepository.findById(dados.produto_id())
                 .orElseThrow(() -> new RegraDeNegocioException("Produto nao encontrado"));
 
-        Carrinho carrinho = carrinhoRepository.findById(dados.carrinho_id())
+        Carrinho carrinho = carrinhoRepository.findByUsuario(logado)
                 .orElseThrow(() -> new RegraDeNegocioException("Carrinho nao encontrado"));
 
         if (dados.quantidadeProduto() > produto.getAnuncioQuantidade())
@@ -40,12 +41,16 @@ public class CarrinhoService {
         return carrinhoProduto;
     }
 
-    public Carrinho listarCarrinho(Long id) {
-        return carrinhoRepository.findById(id)
+    public Carrinho listarCarrinho(Usuario logado) {
+
+        return carrinhoRepository.findByUsuario(logado)
                 .orElseThrow(() -> new RegraDeNegocioException("Carrinho nao encontrado"));
     }
 
-    public CarrinhoProduto detalharProdutoCarrinho(Long idCarrinho, Long idProduto) {
+    public CarrinhoProduto detalharProdutoCarrinho(Usuario logado, Long idProduto) {
+
+        Long idCarrinho = carrinhoRepository.retornarIdCarrinho(logado)
+                .orElseThrow(() -> new RegraDeNegocioException("Carrinho nao encontrado"));
 
         CarrinhoProdutoId carrinhoProdutoId = new CarrinhoProdutoId(idCarrinho, idProduto);
         return carrinhoProdutoRepository.findById(carrinhoProdutoId)
@@ -53,12 +58,12 @@ public class CarrinhoService {
     }
 
     @Transactional
-    public void removerProdutoCarrinho(Long idCarrinho, Long idProduto) {
+    public void removerProdutoCarrinho(Usuario logado, Long idProduto) {
 
-        Carrinho carrinho = carrinhoRepository.findById(idCarrinho)
+        Carrinho carrinho = carrinhoRepository.findByUsuario(logado)
                 .orElseThrow(() -> new RegraDeNegocioException("Carrinho nao encontrado"));
 
-        CarrinhoProdutoId carrinhoProdutoId = new CarrinhoProdutoId(idCarrinho, idProduto);
+        CarrinhoProdutoId carrinhoProdutoId = new CarrinhoProdutoId(logado.getId(), idProduto);
         CarrinhoProduto carrinhoProduto = carrinhoProdutoRepository.findById(carrinhoProdutoId)
                 .orElseThrow(() -> new RegraDeNegocioException("Prduto nao encontrado no carrinho"));
 
@@ -67,21 +72,21 @@ public class CarrinhoService {
     }
 
     @Transactional
-    public void limparCarrinho(Long idCarrinho) {
+    public void limparCarrinho(Usuario logado) {
 
-        Carrinho carrinho = carrinhoRepository.findById(idCarrinho)
+        Carrinho carrinho = carrinhoRepository.findByUsuario(logado)
                 .orElseThrow(() -> new RegraDeNegocioException("Carrinho nao encontrado"));
 
-        carrinho.limparCarrinho(idCarrinho);
+        carrinho.limparCarrinho();
     }
 
     @Transactional
-    public CarrinhoProduto adcionarQuantidadeProduto(Long idCarrinho, Long idProduto) {
+    public CarrinhoProduto adcionarQuantidadeProduto(Usuario logado, Long idProduto) {
 
-        Carrinho carrinho = carrinhoRepository.findById(idCarrinho)
+        Carrinho carrinho = carrinhoRepository.findByUsuario(logado)
                 .orElseThrow(() -> new RegraDeNegocioException("Carrinho nao encontrado"));
 
-        CarrinhoProdutoId carrinhoProdutoId = new CarrinhoProdutoId(idCarrinho, idProduto);
+        CarrinhoProdutoId carrinhoProdutoId = new CarrinhoProdutoId(carrinho.getId(), idProduto);
         CarrinhoProduto carrinhoProduto = carrinhoProdutoRepository.findById(carrinhoProdutoId)
                 .orElseThrow(() -> new RegraDeNegocioException("Prduto nao encontrado no carrinho"));
 
@@ -92,12 +97,12 @@ public class CarrinhoService {
     }
 
     @Transactional
-    public CarrinhoProduto diminuirQuantidadeProduto(Long idCarrinho, Long idProduto) {
+    public CarrinhoProduto diminuirQuantidadeProduto(Usuario logado, Long idProduto) {
 
-        Carrinho carrinho = carrinhoRepository.findById(idCarrinho)
+        Carrinho carrinho = carrinhoRepository.findByUsuario(logado)
                 .orElseThrow(() -> new RegraDeNegocioException("Carrinho nao encontrado"));
 
-        CarrinhoProdutoId carrinhoProdutoId = new CarrinhoProdutoId(idCarrinho, idProduto);
+        CarrinhoProdutoId carrinhoProdutoId = new CarrinhoProdutoId(carrinho.getId(), idProduto);
         CarrinhoProduto carrinhoProduto = carrinhoProdutoRepository.findById(carrinhoProdutoId)
                 .orElseThrow(() -> new RegraDeNegocioException("Prduto nao encontrado no carrinho"));
 

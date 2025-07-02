@@ -1,6 +1,7 @@
 package com.joao.api_vendas_roupas.domain.carrinho;
 
 import com.joao.api_vendas_roupas.domain.carrinho.carrinhoProduto.CarrinhoProduto;
+import com.joao.api_vendas_roupas.domain.usuario.Usuario;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -19,9 +20,16 @@ public class Carrinho {
     @OneToMany(mappedBy = "carrinho", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CarrinhoProduto> itens = new ArrayList<>();
 
-    public Carrinho() {
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
+    public Carrinho(Usuario usuario) {
         this.valorCompra = 0.0;
+        this.usuario = usuario;
     }
+
+    protected Carrinho() {}
 
     public Long getId() {
         return id;
@@ -53,7 +61,7 @@ public class Carrinho {
         this.valorCompra -= valorRemovido;
     }
 
-    public void limparCarrinho(Long idCarrinho) {
+    public void limparCarrinho() {
         this.itens.clear();
         this.valorCompra = 0.0;
     }
@@ -61,4 +69,5 @@ public class Carrinho {
     public void alterarValor(Integer quantidade, Double precoUnitario) {
         this.valorCompra = quantidade * precoUnitario;
     }
+
 }
